@@ -11,6 +11,8 @@ window.onload = function() {
     var dataHeight = document.getElementById('dataHeight');
     var dataWidth = document.getElementById('dataWidth');
     var dataRotate = document.getElementById('dataRotate');
+
+    var newData = document.getElementById('dataX');
     var options = {
       aspectRatio: 321 / 180,
       preview: '.img-preview',
@@ -31,16 +33,39 @@ window.onload = function() {
   
         // console.log(e.type);
         dataX.value = Math.round(data.x);
+        // console.log(data.x);
         dataY.value = Math.round(data.y);
         dataHeight.value = Math.round(data.height);
         dataWidth.value = Math.round(data.width);
         dataRotate.value = typeof data.rotate !== 'undefined' ? data.rotate : '';
       },
       zoom: function(e) {
+        //   console.log(data.x)
         // console.log(e.type, e.detail.ratio);
+        
+
       }
     };
-    var cropper = new Cropper(image, options);
+
+
+    
+    // var cropper = new Cropper(image, options),{
+      
+    //     viewMode: 2,
+    // }
+    var cropper = new Cropper(image, options, {
+        autoCrop: true,
+        autoCropArea: 1,
+        aspectRatio: 500 / 800,
+        minCropBoxWidth: 500,
+        minCropBoxHeight: 800,
+        viewMode: 3,
+        ready: function() {
+            generatePreview();
+        }
+    });
+    console.log(cropper);
+
     var originalImageURL = image.src;
     var uploadedImageType = 'image/jpeg';
     var uploadedImageURL;
@@ -52,7 +77,6 @@ window.onload = function() {
     if (typeof download.download === 'undefined') {
       download.className += ' disabled';
     }
-  
     // Options
     actions.querySelector('.docs-toggles').onchange = function(event) {
       var e = event || window.event;
@@ -61,7 +85,6 @@ window.onload = function() {
       var canvasData;
       var isCheckbox;
       var isRadio;
-  
       if (!cropper) {
         return;
       }
@@ -96,6 +119,7 @@ window.onload = function() {
       }
     };
   
+    
     // Methods
     actions.querySelector('.docs-buttons').onclick = function(event) {
       var e = event || window.event;
@@ -115,6 +139,7 @@ window.onload = function() {
         }
   
         target = target.parentNode;
+       
       }
   
       if (target === this || target.disabled || target.className.indexOf('disabled') > -1) {
@@ -129,7 +154,7 @@ window.onload = function() {
       };
   
       cropped = cropper.cropped;
-  
+    
       if (data.method) {
         if (typeof data.target !== 'undefined') {
           input = document.querySelector(data.target);
@@ -142,14 +167,22 @@ window.onload = function() {
             }
           }
         }
+       
   
         switch (data.method) {
           case 'rotate':
             if (cropped) {
+            //   dataX.value = image.height, dataY.value = image.width;
+              console.log(cropper.containerData.height);
+             
               cropper.clear();
+              
+            
             }
-  
+          
+
             break;
+            
   
           case 'getCroppedCanvas':
             try {
@@ -165,12 +198,12 @@ window.onload = function() {
   
               data.option.fillColor = '#fff';
             }
-  
+          
             break;
         }
+        
   
         result = cropper[data.method](data.option, data.secondOption);
-  
         switch (data.method) {
           case 'rotate':
             if (cropped) {
@@ -181,36 +214,15 @@ window.onload = function() {
   
           case 'scaleX':
           case 'scaleY':
+          
+
             target.setAttribute('data-option', -data.option);
             break;
-  
-          case 'getCroppedCanvas':
-            if (result) {
-              // Bootstrap's Modal
-              $('#getCroppedCanvasModal').modal().find('.modal-body').html(result);
-  
-              if (!download.disabled) {
-                download.href = result.toDataURL(uploadedImageType);
-              }
-            }
-  
-            break;
-  
-          case 'destroy':
-            cropper = null;
-  
-            if (uploadedImageURL) {
-              URL.revokeObjectURL(uploadedImageURL);
-              uploadedImageURL = '';
-              image.src = originalImageURL;
-            }
-  
-            break;
         }
-  
         if (typeof result === 'object' && result !== cropper && input) {
           try {
             input.value = JSON.stringify(result);
+          
           } catch (e) {
             // console.log(e.message);
           }
